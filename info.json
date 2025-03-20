@@ -1,0 +1,39 @@
+{
+    "identifier": "baerwang.bobplugin-ai-translate",
+    "category": "translate",
+    "version": "0.0.1",
+    "name": "AI 翻译",
+    "summary": "Bob 翻译插件",
+    "author": "baerwang <baerwang@apache.org>",
+    "appcast": "",
+    "homepage": "https://github.com/baerwang/bobplugin-ai-translate",
+    "icon": "icon.png",
+    "minBobVersion": "0.5.0",
+    "options":
+    [
+        {
+            "identifier": "ai",
+            "type": "menu",
+            "title": "AI",
+            "defaultValue": "deepseek",
+            "menuValues":
+            [
+                {
+                    "title": "DeepSeek",
+                    "value": "deepseek"
+                },
+                {
+                    "title": "OpenAI",
+                    "value": "openai"
+                }
+            ]
+        },
+        {
+            "identifier": "apikey",
+            "type": "text",
+            "title": "APIKey",
+            "desc": "APIKey Secret",
+            "defaultValue": ""
+        }
+    ]
+}
