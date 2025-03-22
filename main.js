@@ -25,6 +25,9 @@ const AI_CONFIG = {
 
 async function translateAPI(text, detectTo) {
     try {
+        if detectTo !== 'en' {
+            throw new Error("❌ only support translate to English");
+        }
         const aiType = $option.ai;
         const selectedAI = AI_CONFIG[aiType];
 
