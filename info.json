@@ -25,6 +25,10 @@
                 {
                     "title": "OpenAI",
                     "value": "openai"
+                },
+                {
+                    "title": "讯飞星火",
+                    "value": "xunfei"
                 }
             ]
         },

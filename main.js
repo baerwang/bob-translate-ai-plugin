@@ -6,12 +6,20 @@ const AI_CONFIG = {
     deepseek: {
         url: "https://api.deepseek.com/v1/chat/completions",
         model: "deepseek-chat",
-        timeout: 10000 // 接口级超时配置
+        timeout: 10000,
+        content: '你是一个专业翻译引擎，请严格按以下规则处理：\n1. 接收英文输入\n2. 同时生成标准中文翻译和中式英语（Chinese English）\n3. 中式英语需包含中文谐音标注，格式：英文单词→中文谐音，如：you→优\n4. 输出格式为：\n标准中文：\n[内容]\n\n中式英语：\n[内容]（标注说明）'
     },
     openai: {
         url: "https://api.openai.com/v1/chat/completions",
         model: "gpt-3.5-turbo",
-        timeout: 8000
+        timeout: 8000,
+        content: 'You are a professional translation engine, must strictly follow rules: After receiving English input, generate both standard Chinese translation and Chinese English. Chinese English must include homophone notes (format example: you→yōu). Final output format (输出格式):\nStandard Chinese: [content]\nChinese English: [content]'
+    },
+    xunfei: {
+        url: "https://spark-api-open.xf-yun.com/v1/chat/completions",
+        model: "4.0Ultra",
+        timeout: 8000,
+        content: '你是一个专业翻译引擎，请严格按以下规则处理：\n1. 接收英文输入\n2. 同时生成标准中文翻译和中式英语（Chinese English）\n3. 中式英语需包含中文谐音标注，格式：英文单词→中文谐音，如：you→优\n4. 输出格式为：\n标准中文：\n[内容]\n\n中式英语：\n[内容]'
     }
 };
 
@@ -20,18 +28,15 @@ async function translateAPI(text, detectTo) {
         const aiType = $option.ai;
         const selectedAI = AI_CONFIG[aiType];
 
-        // 配置检查
         if (!selectedAI?.url || !selectedAI?.model) {
-            throw new Error("❌ 请检查接口配置");
+            throw new Error("❌ please select a valid AI engine");
         }
 
-        // API密钥检查
-        const apiKey = $option.apikey; // 注意变量名必须与 config.json 完全匹配
+        const apiKey = $option.apikey;
         if (!apiKey) {
-            throw new Error("❌ 请填写API密钥");
+            throw new Error("❌ please enter the API key");
         }
 
-        // 发送请求（关键改动：使用 $http.timeout）
         const response = await $http.post({
             url: selectedAI.url,
             header: {
@@ -43,28 +48,26 @@ async function translateAPI(text, detectTo) {
                 messages: [
                     {
                         role: "system",
-                        content: "你是一个专业翻译引擎，请严格按以下规则处理：\n1. 接收英文输入\n2. 同时生成标准中文翻译和中式英语（Chinese English）\n3. 中式英语需包含中文谐音标注，格式：英文单词→中文谐音，如：you→优\n4. 输出格式为：\n标准中文：\n[内容]\n\n中式英语：\n[内容]（标注说明）"
+                        content: selectedAI.content
                     },
                     {
                         role: "user",
-                        content: text // 直接使用原始文本
+                        content: text
                     }
                 ]
             },
-            timeout: selectedAI.timeout // 核心修复点
+            timeout: selectedAI.timeout
         });
 
-        // 处理响应
         if (response.data.error) {
-            throw new Error(`接口返回错误: ${response.data.error.message}`);
+            throw new Error(`api error: ${response.data.error.message}`);
         }
 
         return response.data.choices[0].message.content;
 
     } catch (error) {
-        // 超时错误特殊处理
         if (error.message.includes('timed out')) {
-            throw new Error(`请求超时（${selectedAI.timeout}ms）`);
+            throw new Error(`api timeout（${selectedAI.timeout}ms）`);
         }
         throw error;
     }
@@ -72,14 +75,20 @@ async function translateAPI(text, detectTo) {
 
 function translate(query, completion) {
     translateAPI(query.text, query.detectTo)
-        .then(result => {
+        .then(resp => {
+            let result = {
+               from: query.detectFrom,
+                to: query.detectTo,
+                fromParagraphs: [query.source],
+                toParagraphs: [resp],
+            };
             completion({ result });
         })
         .catch(error => {
             completion({
                 error: {
                     type: "apiError",
-                    message: error.message.replace(/[^\x20-\x7E\u4E00-\u9FA5]/g, "") // 过滤非法字符
+                    message: error.message.replace(/[^\x20-\x7E\u4E00-\u9FA5]/g, "")
                 }
             });
         });
